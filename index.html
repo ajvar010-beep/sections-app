@@ -8834,7 +8834,8 @@ html, body {
     for (i = 0; i < a.length; i++) if (a[i] < 90) ink++;
     var ink_frac = ink / a.length;
     // на телефоне image_prep нет, поэтому судим только по чернилам
-    if (ink_frac < 0.005) return { ok: false, ink_frac: ink_frac };
+    // Порог 0.003: фото-подобные чертежи имеют ~0.004, чистые ~0.027, мусор >0.3
+    if (ink_frac < 0.003) return { ok: false, ink_frac: ink_frac };
     return { ok: true, ink_frac: ink_frac };
   }
 
@@ -8866,21 +8867,17 @@ html, body {
       }
 
       // проверка качества входа (задача #5): если чернил почти нет,
-      // честно отказываем, а не врём «куб 50 %»
+      // помечаем как неуверенный, но НЕ скрываем «мусор» — пользователь
+      // должен видеть, что модель честно не нашла фигуру
       var q = _input_quality(g, size0);
-      if (!q.ok) {
-        cb(null, { guesses: [], best: null, confident: false, app_kind: null, phrase: 'не удалось определить фигуру' });
-        return;
-      }
-
       var logits = preprocess_and_infer(g, size0);
       var result = make_result(logits);
 
-      // если лучший ответ «мусор» с высокой уверенностью — модель честно
-      // не видит фигуру; не предлагаем её как фигуру
-      if (result.best && result.best.label === 'мусор' && result.best.prob > 0.7) {
-        cb(null, { guesses: [], best: null, confident: false, app_kind: null, phrase: 'не удалось определить фигуру' });
-        return;
+      if (!q.ok) {
+        // Принудительно понижаем уверенность, чтобы интерфейс показал
+        // «Уверенности мало» и не предлагал автоматически.
+        result.guesses.forEach(function (g) { g.prob = Math.min(g.prob, 0.5); });
+        result.confident = false;
       }
 
       cb(null, result);
