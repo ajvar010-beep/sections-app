@@ -12,7 +12,7 @@
  */
 'use strict';
 
-var CACHE = 'sections-ve7fb3fe5ed';
+var CACHE = 'sections-v7d9e14a700';
 var PRECACHE = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener('install', function (e) {
